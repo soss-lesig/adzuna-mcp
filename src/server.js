@@ -1,39 +1,46 @@
 /**
- * MCP server factory. Creates an McpServer instance, registers both tools
- * (search_jobs, get_job_details), and returns the configured server. Knows
- * nothing about transports: the two entry points (index.stdio.js,
- * index.http.js) import this and wrap it in their respective transport. The
- * Reed client is constructed here and closed over per-tool so each tool's
- * handler stays (args, client) for testability.
+ * MCP server factory for adzuna-mcp. Constructs an AdzunaClient,
+ * registers each tool against an McpServer instance, and returns the
+ * configured server. Knows nothing about transports: the two entry
+ * points (index.stdio.js, index.http.js) import this and wrap the
+ * returned server in their respective transport. Each tool handler
+ * stays a `(args, client)` function for testability; the closure
+ * happens inline in the registration loop.
  */
 
 import { readFileSync } from 'node:fs';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import ReedClient from './reed-client.js';
+import AdzunaClient from './adzuna-client.js';
 import * as searchJobs from './tools/search-jobs.js';
-import * as getJobDetails from './tools/get-job-details.js';
 
-// package.json read via fs rather than `import ... with/assert { type: 'json' }`
-// because no single import-attribute syntax covers our declared engines.node
-// ">=20.0.0" range: `assert` works on Node 20 but is a SyntaxError on Node 22+,
-// `with` works on Node 22+ but not on Node 20.
+// package.json is read via fs rather than `import ... assert/with`
+// because no single import-attribute syntax covers our declared
+// engines.node ">=20.0.0" range: `assert` works on Node 20 but is a
+// SyntaxError on Node 22+, while `with` works on Node 22+ but not
+// on Node 20. Same reasoning as reed-mcp.
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
 );
 
-const TOOLS = [searchJobs, getJobDetails];
+const TOOLS = [searchJobs];
 
 /**
- * Create an MCP server pre-configured with reed-mcp's tools. The returned
- * server has no transport attached; entry points wrap it before listening.
+ * Create an MCP server pre-configured with adzuna-mcp's tools. The
+ * returned server has no transport attached; entry points wrap it
+ * before connecting.
  *
  * @param {object} options
- * @param {string} options.apiKey - Reed API key used to construct the
- *   ReedClient that all tool handlers share via closure capture.
- * @returns {McpServer} Configured server, ready to be wrapped in a transport.
+ * @param {string} options.appId - Adzuna application ID. Required.
+ * @param {string} options.appKey - Adzuna application key. Required.
+ * @param {string} [options.country] - ISO country code, passed through
+ *   to AdzunaClient. Defaults to `gb` inside the client when undefined.
+ *   Exposed at this layer so entry points can plumb it through later
+ *   (e.g., via an `ADZUNA_COUNTRY` env var) without re-wiring.
+ * @returns {McpServer} Configured server, ready to be wrapped in a
+ *   transport.
  */
-export function createServer({ apiKey }) {
-  const client = new ReedClient({ apiKey });
+export function createServer({ appId, appKey, country }) {
+  const client = new AdzunaClient({ appId, appKey, country });
   const server = new McpServer({ name: pkg.name, version: pkg.version });
 
   for (const tool of TOOLS) {
