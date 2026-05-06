@@ -61,22 +61,34 @@ export function formatLocation(location) {
 
 /**
  * Format Adzuna's salary fields as a single string. Tolerates partial
- * data (only min, only max, neither). Marks predicted salaries
- * explicitly so the LLM can convey honesty about salary signal.
+ * data (only min, only max, neither). Rounds to integer (Adzuna returns
+ * floats, often with two decimal places for ML-predicted salaries
+ * which look broken in the UI). Collapses an equal min/max into a
+ * single value rather than printing "GBP 60000-60000". Marks predicted
+ * salaries explicitly so the LLM can convey honesty about the signal.
  *
  * @param {number|null|undefined} min
  * @param {number|null|undefined} max
- * @param {number|null|undefined} isPredicted - 1 if Adzuna predicted the
- *   salary, 0 if real, absent if no salary at all.
- * @returns {string} e.g. "GBP 50000-55000", "GBP 50000+ (predicted)",
- *   or "" if no salary data.
+ * @param {number|string|boolean|null|undefined} isPredicted - Truthy
+ *   when Adzuna predicted (rather than scraped) the salary. The wire
+ *   format is the string "1"/"0" despite Adzuna's docs example showing
+ *   numeric; we accept either form, plus boolean, defensively.
+ * @returns {string} e.g. "GBP 50000-55000", "GBP 60000 (predicted)",
+ *   "GBP 50000+", or "" if no salary data.
  */
 export function formatSalary(min, max, isPredicted) {
   let str = '';
-  if (min && max) str = `GBP ${min}-${max}`;
-  else if (min) str = `GBP ${min}+`;
-  else if (max) str = `GBP up to ${max}`;
-  if (str && isPredicted === 1) str += ' (predicted)';
+  if (min && max) {
+    if (min === max) str = `GBP ${Math.round(min)}`;
+    else str = `GBP ${Math.round(min)}-${Math.round(max)}`;
+  } else if (min) {
+    str = `GBP ${Math.round(min)}+`;
+  } else if (max) {
+    str = `GBP up to ${Math.round(max)}`;
+  }
+  const predicted =
+    isPredicted === 1 || isPredicted === '1' || isPredicted === true;
+  if (str && predicted) str += ' (predicted)';
   return str;
 }
 
