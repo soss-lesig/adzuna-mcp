@@ -1,0 +1,45 @@
+{
+  "name": "adzuna-mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol server for the Adzuna job search API",
+  "type": "module",
+  "bin": {
+    "adzuna-mcp": "src/index.stdio.js"
+  },
+  "files": [
+    "src",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "start:stdio": "node --env-file=.env src/index.stdio.js",
+    "start:http": "node --env-file=.env src/index.http.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "adzuna",
+    "jobs",
+    "job-search",
+    "ai",
+    "claude"
+  ],
+  "author": "Andrew Pendlebury",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/soss-lesig/adzuna-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/soss-lesig/adzuna-mcp/issues"
+  },
+  "homepage": "https://github.com/soss-lesig/adzuna-mcp#readme",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "express": "^5.2.1",
+    "zod": "^4.3.6"
+  }
+}

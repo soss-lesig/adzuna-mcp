@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Env (never commit, contains Adzuna API credentials)
+.env
+.env.local
+
+# Claude Code local settings (per-user permissions, not shared)
+.claude/settings.local.json
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build output (none yet, but future-proofing)
+dist/
+build/
